@@ -1,0 +1,24 @@
+export const properties = [
+  { text: 'Best Match', value: 'bestMatch' },
+  { text: 'Newest', value: 'newest' },
+  { text: 'Rating', value: 'ratingAverage' },
+  { text: 'Distance',value: 'distance' },
+  { text: 'Popularity',value: 'popularity' },
+  { text: 'Price',value: 'averageProductPrice' },
+  { text: 'Delivery Costs',value: 'deliveryCosts' },
+  { text: 'Minimum Cost',value: 'minCost' },
+  { text: 'Top Restaurants',value: 'topRestaurants' }
+];
+
+export const status = {
+  FAVORITE: 'favorite',
+  OPEN: 'open',
+  AHEAD: 'order ahead',
+  CLOSED: 'closed'
+}
+
+export const cashFilters = [
+  "averageProductPrice",
+  "deliveryCosts",
+  "minCost"
+]

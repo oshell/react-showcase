@@ -1,83 +1,93 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { Card } from 'semantic-ui-react';
 import StarRatings from 'react-star-ratings';
-import * as constants from '../App/constants';
+import * as style from '../../constants/style';
+import * as constants from '../../constants/constants';
+import { toggleFavorite } from '../../actions/index';
+import { connect } from 'react-redux';
 
-const style = {
-  rating: {
-    margin: '5px 0 0 0'
-  },
-  button: {
-    float: 'right',
-    position: 'absolute',
-    top: '10px',
-    right: '10px'
-  }
-}
-
-const cashFilters = [
-  "averageProductPrice",
-  "deliveryCosts",
-  "minCost"
-]
 
 class RestaurantListElement extends Component {
+  handleClick(element) {
+    this.props.toggleFavorite(
+      element,
+      this.props.sorting
+     );
+  }
 
-  render() {
-    let element = this.props.element;
-    let counter = this.props.counter;
-    let value = element.sortingValues[this.props.currentFilter.value];
+  renderButton(element) {
+    let isFavorite = element.status === constants.status.FAVORITE;
+    let cssClass = isFavorite ? 'heart icon' : 'heart outline icon';
 
-    if (cashFilters.includes(this.props.currentFilter.value)) {
+    let favouriteButton = <button className="ui icon button"
+          style={style.css.restaurantListElement.button}
+          onClick={() => { return this.handleClick(element)}}>
+          <i className={cssClass}></i>
+      </button>;
+
+    return favouriteButton;
+  }
+
+  renderFilterValue(element) {
+    // change display of price values
+    let value = element.sortingValues[this.props.sorting.property.value];
+    if (constants.cashFilters.includes(this.props.sorting.property.value)) {
       value = value/100;
     }
 
-    // set cssClass for search results
-    let searchTerm = this.props.searchTerm.toLowerCase();
-    let elementName = element.name.toLowerCase();
-    let cardCss = elementName.includes(searchTerm)
-      ? {} : {display: 'none'};
+    let filterValue = <div>
+      {this.props.sorting.property.text + ': ' + value}
+    </div>;
 
+    return filterValue;
+  }
+
+  renderDescription(element) {
+    let filterValue = this.renderFilterValue(element);
+    let favouriteButton = this.renderButton(element);
+    return <Fragment>{filterValue} {favouriteButton}</Fragment>;
+  }
+
+  renderHeader(element) {
+    let name = <div>{element.name}</div>;
+    let rating = <div style={style.css.restaurantListElement.rating}>
+      <StarRatings
+        rating={element.sortingValues.ratingAverage}
+        starRatedColor='orange'
+        numberOfStars={5}
+        name='rating'
+        starDimension='15px'
+        starSpacing='3px'
+      /></div>;
+    return <Fragment>{name}{rating}</Fragment>;
+  }
+
+  render() {
+    // comes from RestaurantList and not from state
+    let element = this.props.element;
+
+    // search applies visibility to objects which is now used
+    let elemStyle = element.visible ? style.css.restaurantListElement.visible : style.css.restaurantListElement.hidden;
 
     return(
       <Card
-        key={counter}
+        style={elemStyle}
         fluid
-        style={cardCss}
         color='orange'
-        header={() => {
-          let name = <div key={++counter}>{element.name}</div>;
-          let rating = <div key={++counter} style={style.rating}><StarRatings
-              rating={element.sortingValues.ratingAverage}
-              starRatedColor='orange'
-              numberOfStars={5}
-              name='rating'
-              starDimension='15px'
-              starSpacing='3px'
-            /></div>;
-          return [name, rating];
-        }}
+        header={() => {return this.renderHeader(element)}}
         meta={element.status}
-        description={() => {
-          let isFavorite = this.props.status === constants.status.FAVORITE;
-          let cssClass = isFavorite ? 'heart icon' : 'heart outline icon';
-          let filterValue =
-            <div key={++counter}>
-              {this.props.currentFilter.text + ': ' + value}
-            </div>;
-          let favouriteButton =
-            <button key={++counter} className="ui icon button"
-                    style={style.button}
-                    onClick={()=>{
-                      this.props.toggleFavourite(element);
-                    }}>
-                    <i className={cssClass}></i>
-                  </button>;
-          return [filterValue, favouriteButton];
-        }}
+        description={() => {return this.renderDescription(element)}}
         />
     );
   }
 }
 
-export default RestaurantListElement;
+const mapStateToProps = state => {
+  return {
+    sorting: state.sorting,
+  }
+}
+
+const mapDispatchToProps = { toggleFavorite };
+
+export default connect(mapStateToProps, mapDispatchToProps)(RestaurantListElement);

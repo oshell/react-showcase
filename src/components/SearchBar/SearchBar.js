@@ -1,75 +1,83 @@
 import React, { Component } from 'react';
 import { Dropdown, Input } from 'semantic-ui-react';
-
-const style = {
-  wrapper: {
-    margin: '20px 0'
-  },
-  filter: {
-    margin: '0 0 0 20px'
-  }
-}
-
-const sortingClasses = {
-  desc: 'sort amount down icon',
-  asc: 'sort amount up icon'
-}
-
+import * as style from '../../constants/style';
+import { connect } from 'react-redux';
+import { search, changeSorting  } from '../../actions/index';
+import * as constants from '../../constants/constants';
+import _ from 'lodash';
 
 class SearchBar extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      sorting: 'desc'
-    };
+  renderInput() {
+    return <Input
+      onChange={(e) => {this.props.search(e.target.value);}}
+      placeholder='Search...' />;
+  }
+
+  renderDropdown() {
+    return <Dropdown
+      style={style.css.searchBar.filter}
+      button
+      className='icon'
+      floating
+      labeled
+      icon='filter'
+      options={constants.properties}
+      search
+      defaultValue='0'
+      onChange={(e, data) => {
+        let option = _.find(data.options, ['value', data.value]);
+        this.props.changeSorting({
+          property: option,
+          order: this.props.sorting.order
+         });
+      }}
+      text={this.props.sorting.property.text}
+    />
+  }
+
+  renderButton() {
+    return <button className="ui icon button"
+      style={style.css.searchBar.filter}
+      onClick={()=>{
+        // cache var, since accessing right after setting will cause bugs
+        let sorting = Object.assign({}, this.props.sorting);
+
+        if (sorting.order === 'desc') {
+          this.props.changeSorting({
+            property: this.props.sorting.property,
+            order: 'asc'
+          });
+        } else {
+          this.props.changeSorting({
+            property: this.props.sorting.property,
+            order: 'desc'
+          });
+        }
+      }}>
+      <i className={style.classes[this.props.sorting.order]}></i>
+    </button>
   }
 
   render() {
     return(
-      <div style={style.wrapper}>
-        <Input
-          onChange={(e) => {this.props.search(e.target.value);}}
-          placeholder='Search...' />
-        <Dropdown
-          style={style.filter}
-          button
-          className='icon'
-          floating
-          labeled
-          icon='filter'
-          options={this.props.filters}
-          search
-          defaultValue='0'
-          onChange={(e, data) => {
-            this.props.changeFilter(data.value);
-            this.props.filterRestaurants(data.value, this.state.sorting);
-          }}
-          text={this.props.currentFilter.text}
-        />
-      <button className="ui icon button"
-          style={style.filter}
-          onClick={()=>{
-            // cache var, since accessing right after setting will cause bugs
-            let sorting = this.state.sorting;
-
-            if (sorting === 'desc') {
-              this.setState({sorting: 'asc'});
-              sorting = 'asc';
-            } else {
-              this.setState({sorting: 'desc'});
-              sorting = 'desc';
-            }
-
-            this.props.filterRestaurants(
-              this.props.currentFilter.value,
-              sorting
-            );
-          }}>
-          <i className={sortingClasses[this.state.sorting]}></i>
-        </button>
+      <div style={style.css.searchBar.wrapper}>
+        {this.renderInput()}
+        {this.renderDropdown()}
+        {this.renderButton()}
       </div>
     );
   }
 }
 
-export default SearchBar;
+const mapStateToProps = state => {
+  return {
+    sorting: state.sorting
+  }
+}
+
+const mapDispatchToProps = {
+  search,
+  changeSorting
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(SearchBar);
